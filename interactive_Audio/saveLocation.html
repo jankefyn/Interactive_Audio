@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Anmelden</title>
+    <script src="registerScript.js" defer></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+
+    <a href="index.html">locations entdecken </a>
+
+
+    <form>
+        <h1>Location speichern</h1>
+        <label for="lat">Latitude</label><br>
+        <input type="text" id="registerLat" name="lat"><br>
+        <label for=passord> longitude:</label><br>
+        <input type=password id="registerLongitude" name="long"><br>
+        <label for=sound> sound:</label><br>
+        <input type=number id="registerSound" name="sound"><br>
+        <button type="button" id="submitUserData"> Location anfrage senden</button>
+    </form>
+
+    <div>
+        <p id=serverantwort> </p>
+    </div>
+
+
+</body>
+
+</html>

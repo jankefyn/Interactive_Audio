@@ -1,9 +1,26 @@
+import * as Http from "http";
+import { ParsedUrlQuery } from "querystring";
+import * as url from "url";
+import * as Mongo from "mongodb";
+
 namespace Prototyp {
 
+
+  let locationCollection: Mongo.Collection;
   let showCurrentCoordinates: string = "";
   let iBaulat: number = 48.04994174315437;
   let iBauLong: number = 8.210831942378386;
+  let musicPlaying: boolean = false;
 
+  interface Input {
+    [type: string]: string | string[];
+  }
+
+  interface locations {
+    lat:number;
+    long:number;
+    sound:number;
+}
   const currentCoordinates: HTMLParagraphElement = <HTMLParagraphElement>document.getElementById("currentCoordinates");
 
   const options = {
@@ -11,13 +28,75 @@ namespace Prototyp {
     maximumAge: 0,
   };
 
-  if ("geolocation" in navigator) {
-    /* geolocation is available */
-    navigator.geolocation.getCurrentPosition(success, error, options);
+  const startButton = document.getElementById("startButton");
+  startButton.addEventListener("click", buttonPressed);
 
-  } else {
-    /* geolocation IS NOT available */
-    currentCoordinates.textContent = "coordinates not available";
+  function buttonPressed(): void {
+    startButton.classList.add("hidden");
+    if ("geolocation" in navigator) {
+      /* geolocation is available */
+      navigator.geolocation.watchPosition(success, error, options);
+
+    } else {
+      /* geolocation IS NOT available */
+      currentCoordinates.textContent = "coordinates not available";
+    }
+  }
+
+  let databaseUrl: string = "mongodb+srv://FynnJ:nicnjX5MjRSm4wtu@gis-ist-geil.wb5k5.mongodb.net/?retryWrites=true&w=majority";
+  console.log("Starting server");
+  let port: number = Number(process.env.PORT);
+  if (!port)
+    port = 8100;
+
+  startServer(port);
+  connectToDatabase(databaseUrl);
+
+
+
+  function startServer(_port: number | string): void {
+    let server: Http.Server = Http.createServer();
+    server.addListener("request", handleRequest);
+    server.addListener("listening", handleListen);
+    server.listen(_port);
+  }
+
+  async function connectToDatabase(_url: string): Promise<void> {
+    let options: Mongo.MongoClientOptions = { useNewUrlParser: true, useUnifiedTopology: true };
+    let mongoClient: Mongo.MongoClient = new Mongo.MongoClient(_url, options);
+    await mongoClient.connect();
+    locationCollection = mongoClient.db("Test").collection("Adventures");
+    console.log("Database connection from adventures: ", locationCollection != undefined);
+
+  }
+
+
+  function handleListen(): void {
+    console.log("Listening");
+  }
+  async function handleRequest(_request: Http.IncomingMessage, _response: Http.ServerResponse): Promise<void> {
+    let q: url.UrlWithParsedQuery = url.parse(_request.url, true);
+    let daten: ParsedUrlQuery = q.query;
+    if (q.pathname == "//saveLocation") {
+      _response.write(await saveLocation(q.query, daten.lat, daten.long));
+    }
+    _response.end();
+  }
+  async function saveLocation(_rückgabe: Input, _lat: string | string[], _long: string | string[]): Promise<string> {
+    let data: locations[] = await locationCollection.find().toArray();
+    if (_lat.toString().match("[a-zA-Z]+")&& _long.toString().match("[a-zA-Z]+")) {
+      return ("die location enthält buchstaben darf aber nur aus nummern bestehen");
+    }
+    
+    if (data.length > 0) {
+      for (let counter: number = 0; counter < data.length; counter++) {
+        if (data[counter].lat == Number(_lat)&& data[counter].long == Number(_long)) {
+          return "ein eintrag mit diesen Koordinaten besteht bereits";
+        }
+      }
+    }
+    locationCollection.insertOne(_rückgabe);
+    return "Location erfolgreich gespeichert";
   }
 
   function success(_pos: GeolocationPosition): void {
@@ -33,9 +112,11 @@ namespace Prototyp {
 
     if (d < 0.05) {
       playSound("../interactive_Audio/audio/iBau.mp3", true, 1000);
+      musicPlaying = true;
     }
-    if (d>0.05){
+    if (d > 0.05 && musicPlaying) {
       stopSound("../interactive_Audio/audio/iBau.mp3");
+      musicPlaying = false;
     }
   }
   function checkDistanceBetween(_pos: GeolocationPosition, _lat: number, _long: number) {
