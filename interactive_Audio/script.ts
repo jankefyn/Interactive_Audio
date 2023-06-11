@@ -82,6 +82,7 @@ namespace Prototyp {
 
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   let audioContext: AudioContext;
+  
   let audioBufferMap: Map<string, AudioBuffer> = new Map();
   let audioSourceMap: Map<string, AudioBufferSourceNode> = new Map();
 
@@ -116,6 +117,7 @@ namespace Prototyp {
     console.log(locationMap);
     audioContext = new AudioContext();
     for (let [key, value] of locationMap) {
+
       loadSound(value.sound);
     }
     if ("geolocation" in navigator) {
@@ -191,6 +193,7 @@ namespace Prototyp {
   function playSound(_url: string, _loop: boolean = false, _duration: number = 0): void {
     console.log(_url);
     console.log("ich spiele");
+    console.log(audioContext);
     let source: AudioBufferSourceNode = audioContext.createBufferSource();
     source.buffer = audioBufferMap.get(_url);
     source.connect(audioContext.destination);

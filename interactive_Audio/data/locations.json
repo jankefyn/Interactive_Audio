@@ -1,17 +1,5 @@
 [
     {
-        "locationID": "iBau",
-        "lat": "48.049931987087916",
-        "long":"8.210778161084647",
-        "sound": "../interactive_Audio/audio/iBau.mp3"
-    },
-    {
-        "locationID":"bahnwegEcke",
-        "lat": "47.58884903158568",
-        "long":"7.614554731360269",
-        "sound":"../interactive_Audio/audio/iBau.mp3"
-    },
-    {
         "locationID": "computerWeil",
         "lat":"47.579136",
         "long":"7.6218368",

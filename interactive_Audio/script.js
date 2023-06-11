@@ -163,6 +163,7 @@ var Prototyp;
     function playSound(_url, _loop = false, _duration = 0) {
         console.log(_url);
         console.log("ich spiele");
+        console.log(audioContext);
         let source = audioContext.createBufferSource();
         source.buffer = audioBufferMap.get(_url);
         source.connect(audioContext.destination);
