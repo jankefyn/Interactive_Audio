@@ -130,8 +130,8 @@ namespace Prototyp {
 
 
   function success(_pos: GeolocationPosition): void {
-   //  currentCoordinates.textContent = "" + _pos.coords.latitude +", "+  _pos.coords.longitude;
-  currentCoordinates.textContent = "distanz zum ziel" + checkDistanceBetween(_pos,47.58884903158568, 7.614554731360269);
+     currentCoordinates.textContent = "" + _pos.coords.latitude +", "+  _pos.coords.longitude;
+  currentCoordinates.textContent = currentCoordinates.textContent +  "distanz zum ziel" + checkDistanceBetween(_pos,47.58884903158568, 7.614554731360269);
    checkForLocations(_pos);
   }
 
