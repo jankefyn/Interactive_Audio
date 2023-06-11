@@ -113,7 +113,7 @@ namespace Prototyp {
   async function startGame(): Promise<void> {
     startButton.classList.add("hidden");
     locationMap = await loadLocationMap();
-
+    console.log(locationMap);
     audioContext = new AudioContext();
     for (let [key, value] of locationMap) {
       loadSound(value.sound);
@@ -130,9 +130,9 @@ namespace Prototyp {
 
 
   function success(_pos: GeolocationPosition): void {
-     currentCoordinates.textContent = "" + _pos.coords.latitude +", "+  _pos.coords.longitude;
-  currentCoordinates.textContent = currentCoordinates.textContent +  "distanz zum ziel" + checkDistanceBetween(_pos,47.58884903158568, 7.614554731360269);
-   checkForLocations(_pos);
+    currentCoordinates.textContent = "" + _pos.coords.latitude + ", " + _pos.coords.longitude;
+    currentCoordinates.textContent = currentCoordinates.textContent + "distanz zum ziel" + checkDistanceBetween(_pos,47.579136, 7.6218368);
+    checkForLocations(_pos);
   }
 
   function checkForLocations(_currentCoordinates: GeolocationPosition): void {
@@ -140,8 +140,8 @@ namespace Prototyp {
       let d: number = checkDistanceBetween(_currentCoordinates, value.lat, value.long);
       if (!musicPlaying) {
         if (d < 0.05) {
-          
-          playSound(value.sound, true,1000);
+
+          playSound(value.sound);
           musicPlaying = true;
           currentsound = value.sound;
           lastLocation = value.locationID;
@@ -189,6 +189,8 @@ namespace Prototyp {
   }
 
   function playSound(_url: string, _loop: boolean = false, _duration: number = 0): void {
+    console.log(_url);
+    console.log("ich spiele");
     let source: AudioBufferSourceNode = audioContext.createBufferSource();
     source.buffer = audioBufferMap.get(_url);
     source.connect(audioContext.destination);
@@ -198,7 +200,7 @@ namespace Prototyp {
   }
 
   function stopSound(_url: string): void {
-    console.log("ich stooppe")
+    console.log("ich stooppe");
     audioSourceMap.get(_url).stop();
     audioSourceMap.delete(_url);
   }

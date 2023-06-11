@@ -100,6 +100,7 @@ var Prototyp;
     async function startGame() {
         startButton.classList.add("hidden");
         locationMap = await loadLocationMap();
+        console.log(locationMap);
         audioContext = new AudioContext();
         for (let [key, value] of locationMap) {
             loadSound(value.sound);
@@ -115,7 +116,7 @@ var Prototyp;
     }
     function success(_pos) {
         currentCoordinates.textContent = "" + _pos.coords.latitude + ", " + _pos.coords.longitude;
-        currentCoordinates.textContent = currentCoordinates.textContent + "distanz zum ziel" + checkDistanceBetween(_pos, 47.58884903158568, 7.614554731360269);
+        currentCoordinates.textContent = currentCoordinates.textContent + "distanz zum ziel" + checkDistanceBetween(_pos, 47.579136, 7.6218368);
         checkForLocations(_pos);
     }
     function checkForLocations(_currentCoordinates) {
@@ -123,7 +124,7 @@ var Prototyp;
             let d = checkDistanceBetween(_currentCoordinates, value.lat, value.long);
             if (!musicPlaying) {
                 if (d < 0.05) {
-                    playSound(value.sound, true, 1000);
+                    playSound(value.sound);
                     musicPlaying = true;
                     currentsound = value.sound;
                     lastLocation = value.locationID;
@@ -160,6 +161,8 @@ var Prototyp;
         audioBufferMap.set(_url, audioBuffer);
     }
     function playSound(_url, _loop = false, _duration = 0) {
+        console.log(_url);
+        console.log("ich spiele");
         let source = audioContext.createBufferSource();
         source.buffer = audioBufferMap.get(_url);
         source.connect(audioContext.destination);
