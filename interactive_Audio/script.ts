@@ -139,7 +139,7 @@ namespace Prototyp {
     for (let [key, value] of locationMap) {
       let d: number = checkDistanceBetween(_currentCoordinates, value.lat, value.long);
       if (!musicPlaying) {
-        if (d < 0.05) {
+        if (d < 1) {
 
           playSound(value.sound);
           musicPlaying = true;
@@ -150,7 +150,7 @@ namespace Prototyp {
           break;
         }
       }
-      if (musicPlaying && value.locationID === lastLocation && d > 0.05) {
+      if (musicPlaying && value.locationID === lastLocation && d > 10) {
         console.log("ich brech ab");
         stopSound(currentsound);
         musicPlaying = false;
