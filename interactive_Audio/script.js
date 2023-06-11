@@ -1,4 +1,137 @@
 "use strict";
+var Prototyp;
+(function (Prototyp) {
+    const startButton = document.getElementById("startButton");
+    startButton.addEventListener("click", startGame);
+    let musicPlaying = false;
+    let currentsound = "";
+    let lastLocation = "";
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioContext;
+    let audioBufferMap = new Map();
+    let audioSourceMap = new Map();
+    const currentCoordinates = document.getElementById("currentCoordinates");
+    const options = {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+    };
+    class Location {
+        locationID;
+        lat;
+        long;
+        sound;
+        constructor(_locationID, _lat, _long, _sound) {
+            this.locationID = _locationID;
+            this.lat = +_lat;
+            this.long = +_long;
+            this.sound = _sound;
+        }
+    }
+    let locationMap = new Map();
+    async function startGame() {
+        startButton.classList.add("hidden");
+        locationMap = await loadLocationMap();
+        audioContext = new AudioContext();
+        for (let [key, value] of locationMap) {
+            loadSound(value.sound);
+        }
+        if ("geolocation" in navigator) {
+            /* geolocation is available */
+            navigator.geolocation.watchPosition(success, error, options);
+        }
+        else {
+            /* geolocation IS NOT available */
+            currentCoordinates.textContent = "coordinates not available";
+        }
+    }
+    function success(_pos) {
+        currentCoordinates.textContent = "" + _pos.coords.latitude + ", " + _pos.coords.longitude;
+        currentCoordinates.textContent = currentCoordinates.textContent + "distanz zum ziel" + checkDistanceBetween(_pos, 47.579136, 7.6218368);
+        checkForLocations(_pos);
+    }
+    function checkForLocations(_currentCoordinates) {
+        for (let [key, value] of locationMap) {
+            let d = checkDistanceBetween(_currentCoordinates, value.lat, value.long);
+            if (!musicPlaying) {
+                if (d < 1.5) {
+                    playAudioFromFile(value.sound, true);
+                    musicPlaying = true;
+                    currentsound = value.sound;
+                    lastLocation = value.locationID;
+                    currentCoordinates.textContent = " du befindest dich in der nähe von: " + value.locationID + " deshalb hörst du etwas.";
+                    break;
+                }
+            }
+            if (musicPlaying && value.locationID === lastLocation && d > 10) {
+                console.log("ich brech ab");
+                stopAudio();
+                musicPlaying = false;
+            }
+        }
+    }
+    let sourceNode = null;
+    function playAudioFromFile(filePath, loop = false) {
+        const audioContext = new AudioContext();
+        fetch(filePath)
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+            .then(audioBuffer => {
+            sourceNode = audioContext.createBufferSource();
+            sourceNode.buffer = audioBuffer;
+            if (loop) {
+                sourceNode.loop = true;
+                sourceNode.loopEnd = audioBuffer.duration;
+            }
+            sourceNode.connect(audioContext.destination);
+            sourceNode.start();
+        })
+            .catch(error => {
+            console.error('Error loading audio:', error);
+        });
+    }
+    function stopAudio() {
+        if (sourceNode) {
+            sourceNode.stop();
+            sourceNode.disconnect();
+            sourceNode = null;
+        }
+    }
+    function checkDistanceBetween(_pos, _lat, _long) {
+        let R = 6371; // Radius of the earth in km
+        let dLat = deg2rad(_lat - _pos.coords.latitude); // deg2rad below
+        let dLon = deg2rad(_long - _pos.coords.longitude);
+        let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(_pos.coords.latitude)) * Math.cos(deg2rad(_lat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c; // Distance in km
+        return d;
+    }
+    function deg2rad(deg) {
+        return deg * (Math.PI / 180);
+    }
+    function error() {
+        alert("error");
+    }
+    async function loadSound(_url) {
+        let response = await fetch(_url);
+        let arraybuffer = await response.arrayBuffer();
+        let audioBuffer = await audioContext.decodeAudioData(arraybuffer);
+        audioBufferMap.set(_url, audioBuffer);
+    }
+    async function loadJson(_path) {
+        let response = await fetch(_path);
+        let json = await response.json();
+        return json;
+    }
+    async function loadLocationMap() {
+        let arrayObject = await loadJson("../interactive_Audio/data/locations.json");
+        let tempLocationMap = new Map();
+        for (let i = 0; i < arrayObject.length; i++) {
+            let loc = new Location(arrayObject[i].locationID, arrayObject[i].lat, arrayObject[i].long, arrayObject[i].sound);
+            tempLocationMap.set(loc.locationID, loc);
+        }
+        return tempLocationMap;
+    }
+})(Prototyp || (Prototyp = {}));
 /*import * as Http from "http";
 import { ParsedUrlQuery } from "querystring";
 import * as url from "url";
@@ -68,127 +201,20 @@ interface Input {
   return "Location erfolgreich gespeichert";
 }
 */
-var Prototyp;
-(function (Prototyp) {
-    const startButton = document.getElementById("startButton");
-    startButton.addEventListener("click", startGame);
-    let musicPlaying = false;
-    let currentsound = "";
-    let lastLocation = "";
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    let audioContext;
-    let audioBufferMap = new Map();
-    let audioSourceMap = new Map();
-    const currentCoordinates = document.getElementById("currentCoordinates");
-    const options = {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-    };
-    class Location {
-        locationID;
-        lat;
-        long;
-        sound;
-        constructor(_locationID, _lat, _long, _sound) {
-            this.locationID = _locationID;
-            this.lat = +_lat;
-            this.long = +_long;
-            this.sound = _sound;
-        }
-    }
-    let locationMap = new Map();
-    async function startGame() {
-        startButton.classList.add("hidden");
-        locationMap = await loadLocationMap();
-        console.log(locationMap);
-        audioContext = new AudioContext();
-        for (let [key, value] of locationMap) {
-            loadSound(value.sound);
-        }
-        if ("geolocation" in navigator) {
-            /* geolocation is available */
-            navigator.geolocation.watchPosition(success, error, options);
-        }
-        else {
-            /* geolocation IS NOT available */
-            currentCoordinates.textContent = "coordinates not available";
-        }
-    }
-    function success(_pos) {
-        currentCoordinates.textContent = "" + _pos.coords.latitude + ", " + _pos.coords.longitude;
-        currentCoordinates.textContent = currentCoordinates.textContent + "distanz zum ziel" + checkDistanceBetween(_pos, 47.579136, 7.6218368);
-        checkForLocations(_pos);
-    }
-    function checkForLocations(_currentCoordinates) {
-        for (let [key, value] of locationMap) {
-            let d = checkDistanceBetween(_currentCoordinates, value.lat, value.long);
-            if (!musicPlaying) {
-                if (d < 1) {
-                    playSound(value.sound);
-                    musicPlaying = true;
-                    currentsound = value.sound;
-                    lastLocation = value.locationID;
-                    currentCoordinates.textContent = " du befindest dich in der nähe von: " + value.locationID + " deshalb hörst du etwas.";
-                    break;
-                }
-            }
-            if (musicPlaying && value.locationID === lastLocation && d > 10) {
-                console.log("ich brech ab");
-                stopSound(currentsound);
-                musicPlaying = false;
-            }
-        }
-    }
-    function checkDistanceBetween(_pos, _lat, _long) {
-        let R = 6371; // Radius of the earth in km
-        let dLat = deg2rad(_lat - _pos.coords.latitude); // deg2rad below
-        let dLon = deg2rad(_long - _pos.coords.longitude);
-        let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(_pos.coords.latitude)) * Math.cos(deg2rad(_lat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        var d = R * c; // Distance in km
-        return d;
-    }
-    function deg2rad(deg) {
-        return deg * (Math.PI / 180);
-    }
-    function error() {
-        alert("error");
-    }
-    async function loadSound(_url) {
-        let response = await fetch(_url);
-        let arraybuffer = await response.arrayBuffer();
-        let audioBuffer = await audioContext.decodeAudioData(arraybuffer);
-        audioBufferMap.set(_url, audioBuffer);
-    }
-    function playSound(_url, _loop = false, _duration = 0) {
-        console.log(_url);
-        console.log("ich spiele");
-        console.log(audioContext);
-        let source = audioContext.createBufferSource();
-        source.buffer = audioBufferMap.get(_url);
-        source.connect(audioContext.destination);
-        source.loop = _loop;
-        source.start(_duration);
-        audioSourceMap.set(_url, source);
-    }
-    function stopSound(_url) {
-        console.log("ich stooppe");
-        audioSourceMap.get(_url).stop();
-        audioSourceMap.delete(_url);
-    }
-    async function loadJson(_path) {
-        let response = await fetch(_path);
-        let json = await response.json();
-        return json;
-    }
-    async function loadLocationMap() {
-        let arrayObject = await loadJson("../interactive_Audio/data/locations.json");
-        let tempLocationMap = new Map();
-        for (let i = 0; i < arrayObject.length; i++) {
-            let loc = new Location(arrayObject[i].locationID, arrayObject[i].lat, arrayObject[i].long, arrayObject[i].sound);
-            tempLocationMap.set(loc.locationID, loc);
-        }
-        return tempLocationMap;
-    }
-})(Prototyp || (Prototyp = {}));
+/*function playSound(_url: string, _loop: boolean = false, _duration: number = 0): void {
+  console.log(_url);
+  console.log("ich spiele");
+  let source: AudioBufferSourceNode = audioContext.createBufferSource();
+  source.buffer = audioBufferMap.get(_url);
+  source.connect(audioContext.destination);
+  source.loop = _loop;
+  console.log(_duration);
+  source.start(_duration);
+  audioSourceMap.set(_url, source);
+}*/
+/*function stopSound(_url: string): void {
+   console.log("ich stooppe");
+   audioSourceMap.get(_url).stop();
+   audioSourceMap.delete(_url);
+ }*/
 //# sourceMappingURL=script.js.map
